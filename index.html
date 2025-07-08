@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Kassensystem SV GSA</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f9f9f9;
+      padding: 20px;
+      max-width: 800px;
+      margin: auto;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #333;
+    }
+    .produktliste {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    button {
+      flex: 1 1 45%;
+      padding: 10px;
+      background-color: #0077cc;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1em;
+    }
+    button:hover {
+      background-color: #005fa3;
+    }
+    .anzeige, .bestellungen {
+      background: white;
+      padding: 15px;
+      border-radius: 5px;
+      margin-bottom: 10px;
+    }
+    #gesamtpreis {
+      font-size: 1.7em;
+      color: #cc0000;
+      font-weight: bold;
+    }
+    input {
+      width: 100%;
+      padding: 8px;
+      font-size: 1em;
+      margin-top: 10px;
+    }
+    .delete-btn {
+      margin-left: 10px;
+      background: none;
+      border: none;
+      color: red;
+      font-size: 1em;
+      cursor: pointer;
+    }
+    .status-button {
+      margin-left: 5px;
+      background-color: #ffaa00;
+    }
+    .status-ready {
+      background-color: #00aa00;
+    }
+  </style>
+</head>
+<body>
+  <h1>Kassensystem SV GSA</h1>
+  <div class="produktliste">
+    <button onclick="addItem('Waffel', 1.50)">Waffel - 1,50€</button>
+    <button onclick="addItem('Waffel mit Puderzucker', 1.80)">Waffel mit Puderzucker - 1,80€</button>
+    <button onclick="addItem('Waffel mit Nutella', 2.00)">Waffel mit Nutella - 2,00€</button>
+    <button onclick="addItem('Waffel mit Kirschen', 2.30)">Waffel mit Kirschen - 2,30€</button>
+    <button onclick="addItem('Waffel mit Kirschen & Sahne', 2.50)">Waffel mit Kirschen & Sahne - 2,50€</button>
+    <button onclick="addItem('Kakao', 1.80)">Kakao - 1,80€</button>
+    <button onclick="addItem('Kakao mit Sahne', 2.00)">Kakao mit Sahne - 2,00€</button>
+  </div>
+
+  <div class="anzeige">
+    <h3>Warenkorb:</h3>
+    <ul id="warenkorb"></ul>
+    <p><strong>Gesamtpreis:</strong> <span id="gesamtpreis">0.00</span> €</p>
+    <input type="number" id="geldEingabe" placeholder="Gegebenes Geld" oninput="berechneWechselgeld()" step="0.01">
+    <p><strong>Wechselgeld:</strong> <span id="wechselgeld">0.00</span> €</p>
+    <button onclick="bestellungAbschliessen()">Bestellung abschließen</button>
+    <button onclick="resetKasse()">Reset</button>
+  </div>
+
+  <div class="bestellungen">
+    <h3>Offene Bestellungen</h3>
+    <div id="bestellListe"></div>
+  </div>
+
+  <script>
+    let warenkorb = [];
+    let gesamtpreis = 0;
+    let bestellungen = [];
+    let aktuelleNummer = 1;
+    const maxNummer = 999;
+
+    function addItem(name, preis) {
+      warenkorb.push({ name, preis });
+      gesamtpreis += preis;
+      updateWarenkorb();
+      berechneWechselgeld();
+    }
+
+    function removeItem(index) {
+      gesamtpreis -= warenkorb[index].preis;
+      warenkorb.splice(index, 1);
+      updateWarenkorb();
+      berechneWechselgeld();
+    }
+
+    function updateWarenkorb() {
+      const liste = document.getElementById('warenkorb');
+      liste.innerHTML = '';
+      warenkorb.forEach((item, index) => {
+        const li = document.createElement('li');
+        li.innerHTML = `${item.name} - ${item.preis.toFixed(2)} € <button class="delete-btn" onclick="removeItem(${index})">🗑</button>`;
+        liste.appendChild(li);
+      });
+      document.getElementById('gesamtpreis').textContent = gesamtpreis.toFixed(2);
+    }
+
+    function berechneWechselgeld() {
+      const gegeben = parseFloat(document.getElementById('geldEingabe').value);
+      const wechselgeld = gegeben - gesamtpreis;
+      document.getElementById('wechselgeld').textContent = !isNaN(wechselgeld) ? wechselgeld.toFixed(2) : '0.00';
+    }
+
+    function resetKasse() {
+      warenkorb = [];
+      gesamtpreis = 0;
+      updateWarenkorb();
+      document.getElementById('geldEingabe').value = '';
+      document.getElementById('wechselgeld').textContent = '0.00';
+    }
+
+    function bestellungAbschliessen() {
+      if (warenkorb.length === 0) return;
+
+      const bestellung = {
+        nummer: aktuelleNummer,
+        artikel: [...warenkorb],
+        status: 'offen'
+      };
+
+      bestellungen.push(bestellung);
+      aktuelleNummer = aktuelleNummer >= maxNummer ? 1 : aktuelleNummer + 1;
+      renderBestellungen();
+      resetKasse();
+    }
+
+    function renderBestellungen() {
+      const container = document.getElementById('bestellListe');
+      container.innerHTML = '';
+
+      bestellungen.forEach((b, index) => {
+        const div = document.createElement('div');
+        div.classList.add('anzeige');
+        div.innerHTML = `<strong>Abholnummer #${b.nummer}</strong><br>${b.artikel.map(a => `- ${a.name} (${a.preis.toFixed(2)} €)`).join('<br>')}<br>Status: ${b.status}`;
+
+        const button = document.createElement('button');
+        button.textContent = b.status === 'offen' ? 'Bereit zur Abholung' : 'Abgeholt';
+        button.classList.add('status-button');
+        if (b.status === 'bereit') button.classList.add('status-ready');
+
+        button.onclick = () => {
+          if (b.status === 'offen') b.status = 'bereit';
+          else if (b.status === 'bereit') {
+            bestellungen.splice(index, 1);
+          }
+          renderBestellungen();
+        };
+
+        div.appendChild(button);
+        container.appendChild(div);
+      });
+    }
+  </script>
+</body>
+</html>
