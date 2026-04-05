@@ -2,99 +2,304 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kassensystem SV GSA</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f9f9f9;
-      padding: 20px;
-      max-width: 800px;
-      margin: auto;
+    :root {
+      --bg-color: #f3f4f6;
+      --card-bg: #ffffff;
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --secondary: #10b981;
+      --danger: #ef4444;
+      --text-main: #1f2937;
+      --text-muted: #6b7280;
+      --border-color: #e5e7eb;
     }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+
+    body {
+      background: var(--bg-color);
+      color: var(--text-main);
+      padding: 20px;
+      min-height: 100vh;
+    }
+
     h1 {
       text-align: center;
-      margin-bottom: 20px;
-      color: #333;
+      margin-bottom: 25px;
+      color: var(--primary);
+      font-weight: 800;
+      font-size: 2rem;
     }
+
+    /* Layout Grid */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card-bg);
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      margin-bottom: 20px;
+    }
+
+    h3 {
+      margin-bottom: 15px;
+      font-size: 1.2rem;
+      border-bottom: 2px solid var(--border-color);
+      padding-bottom: 8px;
+      color: var(--text-main);
+    }
+
+    /* Produkt-Grid */
     .produktliste {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 20px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 12px;
     }
-    button {
-      flex: 1 1 45%;
-      padding: 10px;
-      background-color: #0077cc;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 1em;
-    }
-    button:hover {
-      background-color: #005fa3;
-    }
-    .anzeige, .bestellungen {
-      background: white;
+
+    .prod-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
       padding: 15px;
-      border-radius: 5px;
-      margin-bottom: 10px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      text-align: center;
+      height: 110px;
+      transition: all 0.2s ease;
+      font-weight: 600;
     }
-    #gesamtpreis {
-      font-size: 1.7em;
-      color: #cc0000;
-      font-weight: bold;
+
+    .prod-btn:hover {
+      border-color: var(--primary);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.1);
     }
-    input {
-      width: 100%;
-      padding: 8px;
-      font-size: 1em;
-      margin-top: 10px;
+
+    .prod-btn .preis {
+      color: var(--primary);
+      font-size: 0.9rem;
+      margin-top: auto;
     }
+
+    /* Warenkorb */
+    #warenkorb {
+      list-style: none;
+      max-height: 200px;
+      overflow-y: auto;
+      margin-bottom: 15px;
+    }
+
+    #warenkorb li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.95rem;
+    }
+
     .delete-btn {
-      margin-left: 10px;
       background: none;
       border: none;
-      color: red;
-      font-size: 1em;
+      color: var(--danger);
+      font-size: 1.1rem;
       cursor: pointer;
+      padding: 4px 8px;
     }
+
+    /* Kasse & Zahlen */
+    .preis-zeile {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      font-size: 1.1rem;
+    }
+
+    #gesamtpreis {
+      font-size: 1.5rem;
+      color: var(--primary);
+      font-weight: 800;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      font-size: 1rem;
+      margin: 10px 0;
+      outline: none;
+    }
+
+    input[type="number"]:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+
+    .action-btn {
+      width: 100%;
+      padding: 12px;
+      border-radius: 6px;
+      border: none;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background 0.2s;
+      margin-top: 10px;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+    }
+
+    .btn-secondary {
+      background: #e5e7eb;
+      color: var(--text-main);
+    }
+
+    .btn-secondary:hover {
+      background: #d1d5db;
+    }
+
+    /* Bestellungen */
+    .bestell-item {
+      padding: 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      margin-bottom: 10px;
+      background: #f9fafb;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-top: 5px;
+    }
+
+    .status-offen { background: #fef3c7; color: #d97706; }
+    .status-bereit { background: #d1fae5; color: #059669; }
+
     .status-button {
-      margin-left: 5px;
-      background-color: #ffaa00;
+      margin-top: 10px;
+      width: 100%;
+      padding: 8px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      background: #e5e7eb;
     }
-    .status-ready {
-      background-color: #00aa00;
+
+    .status-button.ready {
+      background: var(--secondary);
+      color: white;
     }
   </style>
 </head>
 <body>
+
   <h1>Kassensystem SV GSA</h1>
-  <div class="produktliste">
-    <button onclick="addItem('Waffel', 1.50)">Waffel - 1,50€</button>
-    <button onclick="addItem('Waffel mit Puderzucker', 1.80)">Waffel mit Puderzucker - 1,80€</button>
-    <button onclick="addItem('Waffel mit Nutella', 2.00)">Waffel mit Nutella - 2,00€</button>
-    <button onclick="addItem('Waffel mit Kirschen', 2.30)">Waffel mit Kirschen - 2,30€</button>
-    <button onclick="addItem('Waffel mit Kirschen & Sahne', 2.50)">Waffel mit Kirschen & Sahne - 2,50€</button>
-    <button onclick="addItem('Kakao', 1.80)">Kakao - 1,80€</button>
-    <button onclick="addItem('Kakao mit Sahne', 2.00)">Kakao mit Sahne - 2,00€</button>
-  </div>
 
-  <div class="anzeige">
-    <h3>Warenkorb:</h3>
-    <ul id="warenkorb"></ul>
-    <p><strong>Gesamtpreis:</strong> <span id="gesamtpreis">0.00</span> €</p>
-    <input type="number" id="geldEingabe" placeholder="Gegebenes Geld" oninput="berechneWechselgeld()" step="0.01">
-    <p><strong>Wechselgeld:</strong> <span id="wechselgeld">0.00</span> €</p>
-    <button onclick="bestellungAbschliessen()">Bestellung abschließen</button>
-    <button onclick="resetKasse()">Reset</button>
-  </div>
+  <div class="container">
+    <div>
+      <div class="card">
+        <h3>Produkte</h3>
+        <div class="produktliste">
+          <button class="prod-btn" onclick="addItem('Waffel', 1.50)">
+            <span>Waffel</span>
+            <span class="preis">1,50 €</span>
+          </button>
+          <button class="prod-btn" onclick="addItem('Puderzucker Waffel', 1.80)">
+            <span>Waffel mit Puderzucker</span>
+            <span class="preis">1,80 €</span>
+          </button>
+          <button class="prod-btn" onclick="addItem('Nutella Waffel', 2.00)">
+            <span>Waffel mit Nutella</span>
+            <span class="preis">2,00 €</span>
+          </button>
+          <button class="prod-btn" onclick="addItem('Kirsch Waffel', 2.30)">
+            <span>Waffel mit Kirschen</span>
+            <span class="preis">2,30 €</span>
+          </button>
+          <button class="prod-btn" onclick="addItem('Kirsch & Sahne Waffel', 2.50)">
+            <span>Waffel mit Kirschen & Sahne</span>
+            <span class="preis">2,50 €</span>
+          </button>
+          <button class="prod-btn" onclick="addItem('Kakao', 1.80)">
+            <span>Kakao</span>
+            <span class="preis">1,80 €</span>
+          </button>
+          <button class="prod-btn" onclick="addItem('Kakao mit Sahne', 2.00)">
+            <span>Kakao mit Sahne</span>
+            <span class="preis">2,00 €</span>
+          </button>
+        </div>
+      </div>
+    </div>
 
-  <div class="bestellungen">
-    <h3>Offene Bestellungen</h3>
-    <div id="bestellListe"></div>
+    <div>
+      <div class="card">
+        <h3>Warenkorb</h3>
+        <ul id="warenkorb">
+          </ul>
+
+        <div class="preis-zeile">
+          <strong>Gesamtpreis:</strong>
+          <span id="gesamtpreis">0,00 €</span>
+        </div>
+
+        <input type="number" id="geldEingabe" placeholder="Gegebenes Geld in €" oninput="berechneWechselgeld()" step="0.01">
+
+        <div class="preis-zeile">
+          <span>Wechselgeld:</span>
+          <strong id="wechselgeld">0,00 €</strong>
+        </div>
+
+        <button class="action-btn btn-primary" onclick="bestellungAbschliessen()">Bestellung abschließen</button>
+        <button class="action-btn btn-secondary" onclick="resetKasse()">Warenkorb leeren</button>
+      </div>
+
+      <div class="card">
+        <h3>Offene Bestellungen</h3>
+        <div id="bestellListe">
+          </div>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -105,15 +310,28 @@
     const maxNummer = 999;
 
     function addItem(name, preis) {
-      warenkorb.push({ name, preis });
+      const existingItem = warenkorb.find(item => item.name === name);
+      if (existingItem) {
+        existingItem.quantity += 1;
+      } else {
+        warenkorb.push({ name, preis, quantity: 1 });
+      }
+      
       gesamtpreis += preis;
       updateWarenkorb();
       berechneWechselgeld();
     }
 
     function removeItem(index) {
-      gesamtpreis -= warenkorb[index].preis;
-      warenkorb.splice(index, 1);
+      const item = warenkorb[index];
+      gesamtpreis -= item.preis;
+      
+      if (item.quantity > 1) {
+        item.quantity -= 1;
+      } else {
+        warenkorb.splice(index, 1);
+      }
+      
       updateWarenkorb();
       berechneWechselgeld();
     }
@@ -121,18 +339,32 @@
     function updateWarenkorb() {
       const liste = document.getElementById('warenkorb');
       liste.innerHTML = '';
+      
       warenkorb.forEach((item, index) => {
         const li = document.createElement('li');
-        li.innerHTML = `${item.name} - ${item.preis.toFixed(2)} € <button class="delete-btn" onclick="removeItem(${index})">🗑</button>`;
+        li.innerHTML = `
+          <span>${item.name} <strong>x${item.quantity}</strong></span>
+          <span>${(item.preis * item.quantity).toFixed(2)} € 
+            <button class="delete-btn" onclick="removeItem(${index})">🗑</button>
+          </span>
+        `;
         liste.appendChild(li);
       });
-      document.getElementById('gesamtpreis').textContent = gesamtpreis.toFixed(2);
+      document.getElementById('gesamtpreis').textContent = gesamtpreis.toFixed(2).replace('.', ',') + ' €';
     }
 
     function berechneWechselgeld() {
       const gegeben = parseFloat(document.getElementById('geldEingabe').value);
       const wechselgeld = gegeben - gesamtpreis;
-      document.getElementById('wechselgeld').textContent = !isNaN(wechselgeld) ? wechselgeld.toFixed(2) : '0.00';
+      
+      const anzeige = document.getElementById('wechselgeld');
+      if (!isNaN(wechselgeld) && wechselgeld >= 0) {
+        anzeige.textContent = wechselgeld.toFixed(2).replace('.', ',') + ' €';
+        anzeige.style.color = '#10b981';
+      } else {
+        anzeige.textContent = '0,00 €';
+        anzeige.style.color = '#1f2937';
+      }
     }
 
     function resetKasse() {
@@ -140,7 +372,7 @@
       gesamtpreis = 0;
       updateWarenkorb();
       document.getElementById('geldEingabe').value = '';
-      document.getElementById('wechselgeld').textContent = '0.00';
+      document.getElementById('wechselgeld').textContent = '0,00 €';
     }
 
     function bestellungAbschliessen() {
@@ -162,19 +394,33 @@
       const container = document.getElementById('bestellListe');
       container.innerHTML = '';
 
+      if (bestellungen.length === 0) {
+        container.innerHTML = '<p style="color: #6b7280; text-align: center;">Keine offenen Bestellungen</p>';
+        return;
+      }
+
       bestellungen.forEach((b, index) => {
         const div = document.createElement('div');
-        div.classList.add('anzeige');
-        div.innerHTML = `<strong>Abholnummer #${b.nummer}</strong><br>${b.artikel.map(a => `- ${a.name} (${a.preis.toFixed(2)} €)`).join('<br>')}<br>Status: ${b.status}`;
+        div.classList.add('bestell-item');
+        
+        const artikelTexte = b.artikel.map(a => `${a.name} (x${a.quantity})`).join(', ');
+        const statusKlasse = b.status === 'offen' ? 'status-offen' : 'status-bereit';
+        
+        div.innerHTML = `
+          <strong>Abholnummer #${b.nummer}</strong>
+          <span class="status-badge ${statusKlasse}">${b.status}</span>
+          <div style="font-size: 0.9rem; color: #4b5563; margin-top: 4px;">${artikelTexte}</div>
+        `;
 
         const button = document.createElement('button');
-        button.textContent = b.status === 'offen' ? 'Bereit zur Abholung' : 'Abgeholt';
+        button.textContent = b.status === 'offen' ? 'Bereit zur Abholung' : 'Als abgeholt markieren';
         button.classList.add('status-button');
-        if (b.status === 'bereit') button.classList.add('status-ready');
+        if (b.status === 'offen') button.classList.add('ready');
 
         button.onclick = () => {
-          if (b.status === 'offen') b.status = 'bereit';
-          else if (b.status === 'bereit') {
+          if (b.status === 'offen') {
+            b.status = 'bereit';
+          } else if (b.status === 'bereit') {
             bestellungen.splice(index, 1);
           }
           renderBestellungen();
@@ -184,6 +430,9 @@
         container.appendChild(div);
       });
     }
+
+    // Initialisiere die Anzeige
+    renderBestellungen();
   </script>
 </body>
 </html>
